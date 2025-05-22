@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docinhos Personalizados</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: linear-gradient(to bottom, #fff0f5, #ffe6f0);
+      padding: 20px;
+      color: #5e0035;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #d63384;
+      margin-bottom: 30px;
+      font-size: 2.2em;
+    }
+
+    .pedido, .finalizacao {
+      background-color: #fff9fb;
+      border: 2px solid #f8c5d7;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 15px;
+      box-shadow: 2px 2px 12px #f3c0d4;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+      color: #c2185b;
+    }
+
+    select, input[type="text"], input[type="number"], input[type="date"], input[type="time"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border: 1px solid #f3a6c1;
+      background-color: #fff5fa;
+      font-size: 14px;
+      transition: box-shadow 0.3s ease;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      box-shadow: 0 0 5px #f48fb1;
+    }
+
+    button {
+      background-color: #ff80ab;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      margin-top: 15px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      box-shadow: 2px 2px 6px #d87aa0;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #f06292;
+    }
+
+    #resumo {
+      background-color: #fff0f5;
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px dashed #ec407a;
+      margin-top: 30px;
+      color: #4a0033;
+      white-space: pre-wrap;
+    }
+
+    #resumo a {
+      display: inline-block;
+      background-color: #f8bbd0;
+      padding: 10px 15px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #880e4f;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    h3 {
+      color: #d81b60;
+      margin-bottom: 10px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px dashed #f8a4c4;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Docinhos Personalizados</h1>
+  <div id="pedidos"></div>
+  <button onclick="adicionarPedido()">Adicionar Pedido</button>
+  <div id="finalizacao" class="finalizacao" style="display: none;">
+    <label>Nome:</label>
+    <input type="text" id="nome-cliente" placeholder="Digite seu nome" />
+
+    <label>Data de retirada:</label>
+    <input type="date" id="data-retirada" />
+
+    <label>Horário de retirada:</label>
+    <input type="time" id="hora-retirada" />
+
+    <button onclick="gerarResumo()">Finalizar Pedido</button>
+  </div>
+  <div id="resumo"></div>
+
+  <script>
+    let pedidoCount = 0;
+
+    function adicionarPedido() {
+      pedidoCount++;
+      const container = document.createElement('div');
+      container.classList.add('pedido');
+      container.id = `pedido-${pedidoCount}`;
+
+      const opcoesQuantidade = [...Array(10)].map((_, i) => {
+        const valor = (i + 1) * 50;
+        return `<option value="${valor}" ${i === 0 ? 'selected' : ''}>${valor}</option>`;
+      }).join('');
+
+      container.innerHTML = `
+        <h3>Pedido ${pedidoCount}</h3>
+
+        <label>Tipo:</label>
+        <select onchange="atualizarCampos(${pedidoCount})" id="tipo-${pedidoCount}">
+          <option value="Tradicional">Tradicional</option>
+          <option value="Gourmet">Gourmet</option>
+          <option value="Colorido">Colorido</option>
+        </select>
+
+        <label>Quantidade:</label>
+        <select id="quantidade-${pedidoCount}" onchange="atualizarCampos(${pedidoCount})">
+          ${opcoesQuantidade}
+        </select>
+
+        <div id="cores-doces-${pedidoCount}" style="display:none">
+          <label>Quantidade de cores (máx. 2 por 50):</label>
+          <select onchange="mostrarCamposCores(${pedidoCount}, 'doces')" id="quantidade-cores-doces-${pedidoCount}"></select>
+          <div id="cores-doces-campos-${pedidoCount}"></div>
+        </div>
+
+        <label>Quantidade de Sabores (máx. 2 por 50):</label>
+        <select onchange="mostrarCamposSabores(${pedidoCount})" id="quantidade-sabores-${pedidoCount}"></select>
+        <div id="sabores-campos-${pedidoCount}"></div>
+
+        <label>Deseja carimbo?</label>
+<select onchange="mostrarCarimbos(${pedidoCount})" id="usar-carimbo-${pedidoCount}">
+  <option value="nao">Sem carimbo</option>
+  <option value="sim">Com carimbo (+ 0,20 centavos por unidade)</option>
+</select>
+<div id="carimbos-campo-${pedidoCount}" style="display:none">
+  <label>Carimbos (máx. 2 por 50):</label>
+  <div id="carimbos-selects-${pedidoCount}"></div>
+  <small id="aviso-carimbo-${pedidoCount}" style="color: red; display: none;">Você atingiu o limite de carimbos.</small>
+</div>
+
+        <label>Embalagem:</label>
+        <select id="embalagem-${pedidoCount}" onchange="mostrarCoresEmbalagem(${pedidoCount})">
+          <option value="Caixinha">Caixinha</option>
+          <option value="Forminha">Forminha</option>
+        </select>
+        <div id="cores-embalagem-${pedidoCount}" style="display:none">
+          <label>Quantidade de cores da embalagem:</label>
+          <select onchange="mostrarCamposCores(${pedidoCount}, 'embalagem')" id="quantidade-cores-embalagem-${pedidoCount}"></select>
+          <div id="cores-embalagem-campos-${pedidoCount}"></div>
+        </div>
+
+        <hr>
+      `;
+
+      document.getElementById('pedidos').appendChild(container);
+
+      document.getElementById('finalizacao').style.display = 'block';
+
+      // Atualiza todos os campos dependentes após inserir o HTML
+      atualizarCampos(pedidoCount);
+    }
+
+    function atualizarCampos(id) {
+      const tipo = document.getElementById(`tipo-${id}`).value;
+      const qtd = parseInt(document.getElementById(`quantidade-${id}`).value);
+      const maxSabores = Math.floor(qtd / 50) * 2;
+
+      const saborSelect = document.getElementById(`quantidade-sabores-${id}`);
+      saborSelect.innerHTML = [...Array(maxSabores)].map((_, i) => `<option value="${i + 1}" ${i === 0 ? 'selected' : ''}>${i + 1}</option>`).join('');
+      
+      mostrarCamposSabores(id);
+
+      const corDocesDiv = document.getElementById(`cores-doces-${id}`);
+      if (tipo === 'Colorido') {
+        corDocesDiv.style.display = 'block';
+        const maxCores = Math.floor(qtd / 50) * 2;
+        const select = document.getElementById(`quantidade-cores-doces-${id}`);
+        select.innerHTML = [...Array(maxCores)].map((_, i) => `<option value="${i + 1}" ${i === 0 ? 'selected' : ''}>${i + 1}</option>`).join('');
+        mostrarCamposCores(id, 'doces');
+      } else {
+        corDocesDiv.style.display = 'none';
+      }
+
+      mostrarCoresEmbalagem(id);
+    }
+
+    function mostrarCamposSabores(id) {
+      const tipo = document.getElementById(`tipo-${id}`).value;
+      const qtd = parseInt(document.getElementById(`quantidade-sabores-${id}`).value);
+      const container = document.getElementById(`sabores-campos-${id}`);
+
+      let opcoes = [];
+      if (tipo === 'Tradicional') opcoes = ['Ninho', 'Brigadeiro', 'Beijinho', 'Casadinho'];
+      else if (tipo === 'Gourmet') opcoes = ['Morango', 'Ferrero Rocher', 'Paçoquinha', 'Óreo', 'Napolitano'];
+      else opcoes = ['Ninho'];
+
+      container.innerHTML = '';
+      for (let i = 0; i < qtd; i++) {
+        const select = document.createElement('select');
+        opcoes.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = s;
+          select.appendChild(opt);
+        });
+        container.appendChild(select);
+      }
+    }
+
+    function mostrarCamposCores(id, tipo) {
+      const qtd = parseInt(document.getElementById(`quantidade-cores-${tipo}-${id}`).value);
+      const container = document.getElementById(`cores-${tipo}-campos-${id}`);
+      container.innerHTML = '';
+      for (let i = 0; i < qtd; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Cor ${i + 1}`;
+        container.appendChild(input);
+      }
+    }
+
+    function mostrarCoresEmbalagem(id) {
+      const embalagem = document.getElementById(`embalagem-${id}`).value;
+      const qtd = parseInt(document.getElementById(`quantidade-${id}`).value);
+      const max = embalagem === 'Caixinha' ? Math.floor(qtd / 50) * 1 : Math.floor(qtd / 50) * 2;
+
+      const select = document.getElementById(`quantidade-cores-embalagem-${id}`);
+      select.innerHTML = [...Array(max)].map((_, i) => `<option value="${i + 1}" ${i === 0 ? 'selected' : ''}>${i + 1}</option>`).join('');
+
+      document.getElementById(`cores-embalagem-${id}`).style.display = 'block';
+      mostrarCamposCores(id, 'embalagem');
+    }
+
+function mostrarCarimbos(id) {
+  const usar = document.getElementById(`usar-carimbo-${id}`).value;
+  const campo = document.getElementById(`carimbos-campo-${id}`);
+  const container = document.getElementById(`carimbos-selects-${id}`);
+  campo.style.display = usar === 'sim' ? 'block' : 'none';
+
+  if (usar !== 'sim') return;
+
+  const categorias = {
+    "Animais": ["Leão", "Macaco", "Hipopótamo", "Girafa", "Vaca", "Porco", "Galinha", "Cavalo"],
+    "Homem": ["Bigode", "Cartola", "Óculos", "Chopp", "Gravata", "Carro"],
+    "Batizado": ["Pomba", "Cruz", "Peixe", "Cálice", "Igreja", "Bíblia"],
+    "Chá Revelação": ["Pegada", "Roupinha", "Urso sem Lacinho", "Urso com Lacinho", "Girl", "Boy", "Ponto de Interrogação", "Mamadeira"],
+    "Heróis": ["Mulher Maravilha", "Batman", "Flash", "Super-Homem", "Capitão América", "Homem-Aranha", "Homem de Ferro", "Pantera Negra"],
+    "Frutas": ["Banana", "Melancia", "Morango", "Maçã", "Uva", "Cereja", "Pera", "Abacaxi"],
+    "Fundo do Mar": ["Peixe", "Estrela do Mar", "Ondas", "Concha", "Âncora", "Calda de Sereia", "Algas", "Cavalo Marinho"],
+    "Natal": ["Papai Noel", "Sinos", "Anjinho", "Árvore", "HO HO HO", "Cabeça de Boneco de Neve", "Caixa de Presente", "Floco de Neve"],
+    "Páscoa": ["Focinho de Coelho", "Pata de Coelho", "Cenoura", "Chocolate", "Coelho", "Orelha de Coelho", "Ovo de Páscoa", "Rabo do Coelho"],
+    "Diversos": ["Estrela de 6 pontas assimétrica", "Estrela de 12 pontas", "Estrela de Davi", "Estrela de 5 pontas", "Coração", "Flor", "Circulo", "Trevo"]
+  };
+
+  container.innerHTML = '';
+
+  for (const categoria in categorias) {
+    const grupo = document.createElement('div');
+    grupo.innerHTML = `<label style="margin-top:10px;"><strong>${categoria}</strong></label>`;
+
+    categorias[categoria].forEach(nome => {
+      const idCb = `carimbo-${id}-${nome.replace(/\s+/g, '-')}`;
+      grupo.innerHTML += `
+        <label style="display:block; margin-left:10px;">
+          <input type="checkbox" value="${nome}" class="carimbo-opcao" id="${idCb}" onchange="verificarLimiteCarimbos(${id})"> ${nome}
+        </label>
+      `;
+    });
+
+    container.appendChild(grupo);
+  }
+
+  verificarLimiteCarimbos(id); // já checa ao abrir
+}
+
+function verificarLimiteCarimbos(id) {
+  const qtd = parseInt(document.getElementById(`quantidade-${id}`).value);
+  const max = Math.floor(qtd / 50) * 2;
+  const checkboxes = document.querySelectorAll(`#carimbos-selects-${id} .carimbo-opcao`);
+  const aviso = document.getElementById(`aviso-carimbo-${id}`);
+
+  let selecionados = 0;
+  checkboxes.forEach(cb => {
+    if (cb.checked) selecionados++;
+  });
+
+  if (selecionados >= max) {
+    aviso.style.display = 'block';
+    checkboxes.forEach(cb => {
+      if (!cb.checked) cb.disabled = true;
+    });
+  } else {
+    aviso.style.display = 'none';
+    checkboxes.forEach(cb => cb.disabled = false);
+  }
+}
+
+    function gerarResumo() {
+      const nome = document.getElementById('nome-cliente').value;
+      const data = document.getElementById('data-retirada').value;
+      const hora = document.getElementById('hora-retirada').value;
+      let total = 0;
+      let texto = '*Docinhos*\n';
+      texto += `*Cliente:* ${nome}\n`;
+      for (let i = 1; i <= pedidoCount; i++) {
+        const tipo = document.getElementById(`tipo-${i}`).value;
+        const qtd = parseInt(document.getElementById(`quantidade-${i}`).value);
+        let valorUnit = tipo === 'Tradicional' ? 0.8 : tipo === 'Gourmet' ? 1.0 : 1.2;
+
+        let extraCarimbo = 0;
+        if (document.getElementById(`usar-carimbo-${i}`).value === 'sim') {
+          extraCarimbo = 0.2;
+        }
+
+        let valorPedido = (valorUnit + extraCarimbo) * qtd;
+        total += valorPedido;
+
+        texto += `\n*Tipo:* ${tipo}\n*Quantidade:* ${qtd}\n`;
+
+        const sabores = Array.from(document.querySelectorAll(`#sabores-campos-${i} select`)).map(s => s.value);
+        texto += `*Sabor:* ${sabores.join(', ')}\n`;
+
+        if (tipo === 'Colorido') {
+          const coresDoces = Array.from(document.querySelectorAll(`#cores-doces-campos-${i} input`)).map(c => c.value);
+          coresDoces.forEach((c, idx) => {
+            texto += `*Cor doce ${idx + 1}:* ${c}\n`;
+          });
+        }
+
+        if (document.getElementById(`usar-carimbo-${i}`).value === 'sim') {
+  const carimbos = Array.from(document.querySelectorAll(`#carimbos-selects-${i} .carimbo-opcao`))
+  .filter(cb => cb.checked)
+  .map(cb => cb.value);
+texto += `*Carimbos:* ${carimbos.join(', ')}\n`;
+}
+
+        const emb = document.getElementById(`embalagem-${i}`).value;
+        texto += `*Embalagem:* ${emb}\n`;
+
+        const coresEmb = Array.from(document.querySelectorAll(`#cores-embalagem-campos-${i} input`)).map(c => c.value);
+        coresEmb.forEach((c, idx) => {
+          texto += `*Cor ${idx + 1}:* ${c}\n`;
+        });
+      }
+      texto += `*Data:* ${data}\n*Horário:* ${hora}\n*Valor:* ${total.toFixed(2).replace('.', ',')}\n`;
+
+      const link = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+      document.getElementById('resumo').innerHTML = `<a href="${link}" target="_blank">Enviar pedido pelo WhatsApp</a><br><br>${texto}`;
+    }
+window.addEventListener('DOMContentLoaded', () => {
+  const dataInput = document.getElementById('data-retirada');
+  const hoje = new Date();
+  hoje.setDate(hoje.getDate() + 2);
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  dataInput.min = `${ano}-${mes}-${dia}`;
+});
+
+  </script>
+</body>
+</html>
