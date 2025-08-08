@@ -378,7 +378,7 @@ texto += `*Carimbos:* ${carimbos.join(', ')}\n`;
       }
       texto += `*Data:* ${data}\n*Horário:* ${hora}\n*Valor:* ${total.toFixed(2).replace('.', ',')}\n`;
 
-      const link = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+      const link = `https://wa.me/558591992782?text=${encodeURIComponent(texto)}`;
       document.getElementById('resumo').innerHTML = `<a href="${link}" target="_blank">Enviar pedido pelo WhatsApp</a><br><br>${texto}`;
     }
 window.addEventListener('DOMContentLoaded', () => {
